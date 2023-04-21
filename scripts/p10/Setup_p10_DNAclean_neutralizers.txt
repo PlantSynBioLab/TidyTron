@@ -1,0 +1,18 @@
+Setup_p10_DNAclean_neutralizers.py
+
+Attach p20_gen2_single on left
+
+Load Dirty tips into deckslot 2
+
+Load clean tips into deckslot 5
+
+Load tube rack (6x50mL conical) into deckslot 3
+
+Load cleaning solutions into 50mL conicals:
+	
+	15mL bleach in B3
+	16mL 3% hydrogen peroxide in A3
+	15mL 1% Citrajet in B2
+	16mL 1M baking soda in A2
+	24mL DI water in B1
+	24ML DI water in A1

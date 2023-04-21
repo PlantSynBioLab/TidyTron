@@ -1,0 +1,15 @@
+Setup_p300_Ecoliclean.py
+
+Attach p300_gen2_single on right
+
+Load Dirty tips into deckslot 2
+
+Load clean tips into deckslot 5
+
+Load tube rack (6x50mL conical) into deckslot 3
+
+Load cleaning solutions into 50mL conicals:
+	
+	24mL bleach in B3
+	25mL 3% hydrogen peroxide in A3
+	25mL DI water in A2

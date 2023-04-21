@@ -1,0 +1,25 @@
+Setup_integrated_tipclean_plateclean_RT_multi.py
+
+Attach p300_gen2_multi on right
+
+Load empty rack for dirty tips into deckslot 5
+
+Load clean tips into deckslot 1
+
+Load tube rack (6x50mL conical) into deckslot 3
+
+Load reservoir into deckslot 9 and fill with DI
+
+Load reservoir for waste into deckslot 11
+
+Load microwell plate into deckslot 2 
+
+Load cleaning solutions into 50mL wells:
+	
+	12mL bleach in A1
+	12mL 3% hydrogen peroxide in A2
+	12mL bleach in A3
+	12mL 3% hydrogen peroxide in A4
+	12mL DI water in A5
+
+

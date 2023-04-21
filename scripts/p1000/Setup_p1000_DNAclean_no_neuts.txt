@@ -1,0 +1,16 @@
+Setup_p1000_DNAclean_no_neut_multi.py
+
+Attach p1000_gen2_single on right
+
+Load Dirty tips into deckslot 2
+
+Load clean tips into deckslot 5
+
+Load tube rack (6x50mL conical) into deckslot 3
+
+Load cleaning solutions into 50mL conicals:
+	
+	36mL bleach in B3
+	36mL 1% Citrajet in B2
+	37mL DI water in B1
+	37ML DI water in A1

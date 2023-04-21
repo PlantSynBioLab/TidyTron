@@ -139,10 +139,10 @@ def run(protocol: protocol_api.ProtocolContext):
         right_pipette.move_to(solutionrack['A2'].top())
         protocol.delay(seconds=6)
 
-        right_pipette.mix(5,1000,solutionrack['B1'].bottom(z=16)) #water
+        right_pipette.mix(5,1000,solutionrack['B1'].bottom(z=1)) #water
         right_pipette.move_to(solutionrack['B1'].top())
 
-        right_pipette.mix(6,1000,solutionrack['A1'].bottom(z=16)) #water
+        right_pipette.mix(6,1000,solutionrack['A1'].bottom(z=1)) #water
         right_pipette.move_to(solutionrack['A1'].top())
         right_pipette.blow_out()
         

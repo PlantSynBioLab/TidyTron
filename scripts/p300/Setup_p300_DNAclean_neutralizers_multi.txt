@@ -1,0 +1,18 @@
+Setup_p300_DNAclean_neutralizers_multi.py
+
+Attach p300_gen2_multi on right
+
+Load Dirty tips into deckslot 2
+
+Load clean tips into deckslot 5
+
+Load nest 12 well reservoir into deckslot 3
+
+Load cleaning solutions into 50mL wells:
+	
+	12mL bleach in A1
+	12mL 3% hydrogen peroxide in A2
+	12mL 1% Citrajet in A3
+	12mL 1M baking soda in A4
+	12mL DI water in A5
+	

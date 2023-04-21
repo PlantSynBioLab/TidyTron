@@ -338,7 +338,7 @@ def run(protocol: protocol_api.ProtocolContext):
     #from opentrons import simulate
     #protocol= simulate.get_protocol_api('2.0')
     right_pipette = protocol.load_instrument('p300_single','right')
-    left_pipette = protocol.load_instrument('p10_single','left')
+   
 
     solutionrack = protocol.load_labware('opentrons_10_tuberack_nest_4x50ml_6x15ml_conical',3)#verify location
     trough = protocol.load_labware('agilent_1_reservoir_290ml',11)
@@ -454,14 +454,14 @@ def run(protocol: protocol_api.ProtocolContext):
         cl = 0
         while cl < 5:
             right_pipette.pick_up_tip(dirtyytiprack1[clean[cl]])  
-            right_pipette.mix(3,10,solutionrack['B4']) #bleach
+            right_pipette.mix(3,10,solutionrack['A1']) #bleach
             #right_pipette.move_to(solutionrack['B4'].top())
             #right_pipette.blow_out()
             right_pipette.mix(3,10,solutionrack['A4']) #H2O2
             right_pipette.move_to(solutionrack['A4'].top())
             right_pipette.blow_out()
-            right_pipette.mix(3,10,solutionrack['B3']) #DI rinse
-            right_pipette.move_to(solutionrack['B3'].top())
+            right_pipette.mix(3,10,solutionrack['B1']) #DI rinse
+            right_pipette.move_to(solutionrack['B1'].top())
             right_pipette.blow_out()
             right_pipette.drop_tip(cleantiprack1[id2well[s]])
             cl+=1
