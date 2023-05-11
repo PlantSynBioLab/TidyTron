@@ -16,9 +16,9 @@ Load microwell plate into deckslot 2
 
 Load cleaning solutions into 50mL conicals:
 	
-	20mL bleach in B4
 	20mL bleach in A1
-	20mL 3% hydrogen peroxide in B3
-	20mL 3% hydrogen peroxide in A4
-	20mL DI water in B1
+	20mL bleach in B1
+	20mL 3% hydrogen peroxide in A2
+	20mL 3% hydrogen peroxide in B2
+	20mL DI water in A3
 

@@ -177,17 +177,22 @@ def run(protocol: protocol_api.ProtocolContext):
 
         cl = 0
         while cl < 5:
-            right_pipette.pick_up_tip(dirtyytiprack1[clean[cl]])  
-            right_pipette.mix(3,10,solutiontrough['A3']) #bleach
+            if s<12:
+                right_pipette.pick_up_tip(dirtyytiprack1[clean[cl]])
+            else:
+                s=0 
+                right_pipette.pick_up_tip(dirtyytiprack1[clean[cl]]) 
+
+            right_pipette.mix(3,295,solutiontrough['A3']) #bleach
             #right_pipette.move_to(solutionrack['B4'].top())
             #right_pipette.blow_out()
-            right_pipette.mix(3,10,solutiontrough['A4']) #H2O2
+            right_pipette.mix(3,300,solutiontrough['A4']) #H2O2
             right_pipette.move_to(solutiontrough['A4'].top())
             right_pipette.blow_out()
-            right_pipette.mix(3,10,solutiontrough['A5']) #DI rinse
+            right_pipette.mix(3,300,solutiontrough['A5']) #DI rinse
             right_pipette.move_to(solutiontrough['A5'].top())
             right_pipette.blow_out()
-            right_pipette.drop_tip(cleantiprack1[id2well[s]])
+            right_pipette.drop_tip(cleantiprack1[id2well1[s]])
             cl+=1
             s+=1
 

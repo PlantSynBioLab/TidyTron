@@ -340,7 +340,7 @@ def run(protocol: protocol_api.ProtocolContext):
     right_pipette = protocol.load_instrument('p300_single','right')
    
 
-    solutionrack = protocol.load_labware('opentrons_10_tuberack_nest_4x50ml_6x15ml_conical',3)#verify location
+    solutionrack = protocol.load_labware('opentrons_6_tuberack_falcon_50ml_conical',3)#verify location
     trough = protocol.load_labware('agilent_1_reservoir_290ml',11)
     plate = protocol.load_labware('nest_96_wellplate_200ul_flat',2)
     
@@ -357,7 +357,7 @@ def run(protocol: protocol_api.ProtocolContext):
 #third row, new strategy, neutralization, no heat##################################################
     temp_module.set_temperature(85)
     protocol.delay(minutes=25)
-    while r <= 96:
+    while r < 96:
 
     # resuspend with 90uL bleach (leave the bleach in)
         if t<96:
@@ -367,7 +367,7 @@ def run(protocol: protocol_api.ProtocolContext):
             t=0 
             right_pipette.pick_up_tip(cleantiprack1[tiprackposition[t]])
         
-        right_pipette.aspirate (180, solutionrack['B4']) #picking up bleach
+        right_pipette.aspirate (180, solutionrack['A1']) #picking up bleach
         right_pipette.dispense(190, plate[id2well1[r]])
         right_pipette.mix(5,270,plate[id2well1[r]])
         right_pipette.aspirate(300, plate[id2well1[r]]) #remove everything.
@@ -385,7 +385,7 @@ def run(protocol: protocol_api.ProtocolContext):
             t=0
             right_pipette.pick_up_tip(cleantiprack1[tiprackposition[t]]) 
 
-        right_pipette.aspirate (280, solutionrack['B4']) #grab bleach
+        right_pipette.aspirate (280, solutionrack['A1']) #grab bleach
         right_pipette.dispense(290, plate[id2well1[r]])
         right_pipette.mix(6,270,plate[id2well1[r]])
         right_pipette.aspirate(300, plate[id2well1[r]]) #remove half.
@@ -402,7 +402,7 @@ def run(protocol: protocol_api.ProtocolContext):
             t=0
             right_pipette.pick_up_tip(cleantiprack1[tiprackposition[t]])
 
-        right_pipette.aspirate (280, solutionrack['B3']) #grab H2O2
+        right_pipette.aspirate (280, solutionrack['A2']) #grab H2O2
         right_pipette.dispense(290, plate[id2well1[r]])
         right_pipette.mix(6,270,plate[id2well1[r]])
         right_pipette.aspirate(300, plate[id2well1[r]]) #remove everything.
@@ -453,17 +453,21 @@ def run(protocol: protocol_api.ProtocolContext):
 
         cl = 0
         while cl < 5:
-            right_pipette.pick_up_tip(dirtyytiprack1[clean[cl]])  
-            right_pipette.mix(3,10,solutionrack['A1']) #bleach
+            if s<96:
+                right_pipette.pick_up_tip(dirtyytiprack1[clean[cl]])
+            else:
+                s=0 
+                right_pipette.pick_up_tip(dirtyytiprack1[clean[cl]])   
+            right_pipette.mix(3,295,solutionrack['B1']) #bleach
             #right_pipette.move_to(solutionrack['B4'].top())
             #right_pipette.blow_out()
-            right_pipette.mix(3,10,solutionrack['A4']) #H2O2
-            right_pipette.move_to(solutionrack['A4'].top())
+            right_pipette.mix(3,300,solutionrack['B2']) #H2O2
+            right_pipette.move_to(solutionrack['B2'].top())
             right_pipette.blow_out()
-            right_pipette.mix(3,10,solutionrack['B1']) #DI rinse
-            right_pipette.move_to(solutionrack['B1'].top())
+            right_pipette.mix(3,300,solutionrack['A3']) #DI rinse
+            right_pipette.move_to(solutionrack['A3'].top())
             right_pipette.blow_out()
-            right_pipette.drop_tip(cleantiprack1[id2well[s]])
+            right_pipette.drop_tip(cleantiprack1[id2well1[s]])
             cl+=1
             s+=1
 
