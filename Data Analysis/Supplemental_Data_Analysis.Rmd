@@ -1,0 +1,1070 @@
+---
+title: "Supplemental Data Analysis"
+author: "John Bryant"
+date: "2023-05-18"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r}
+library(multcompView)
+library(ggplot2)
+library(ggbeeswarm)
+library(forcats)
+library(dplyr)
+library(stringr)
+library(rstatix)
+library(ggpubr)
+```
+
+
+```{r}
+load("my_work_space.RData")
+```
+
+#Figure 1A
+```{r}
+data<- read.csv("rawdata/plastics_fig1.csv")
+
+means <- aggregate(.~plasticware,data=data,FUN = mean )
+colnames(means) <- c("plasticware", "mean")
+sd <- aggregate(.~plasticware,data=data,sd)
+colnames(sd) <- c("plasticware", "sd")
+means["sd"] <- sd["sd"]
+#means <- merge(means, LABELS, by = "Sample",
+ #                 all.x = TRUE)
+
+light <- subset(means, plasticware == "straw" | plasticware == "p10"| 
+                  plasticware == "p300"| plasticware == "p1000")
+
+ggplot(data = light, aes(x = fct_relevel(plasticware,"p1000","straw","p300",
+                                         "p10"), y = mean,fill="maroon")) +
+  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.75) +
+  geom_errorbar( aes(x=plasticware, ymin=mean-sd, ymax=mean+sd), width=0.4, 
+                 colour="orange", alpha=0.9, size=1.3,
+                 position = position_dodge(.9)) +  labs(y = "weight (g)", 
+                                                        x = "Type of plastic")+
+  scale_fill_manual(values=c("maroon","gray","gray","gray"))+ theme_minimal()+
+  theme(axis.text.x = element_text(angle = 20, vjust = 0.5, hjust=.2),
+        legend.position = "none")+geom_text(aes(label=round(mean,2)),
+                                            nudge_x = .11,nudge_y = .05)
+```
+#Figure 1B
+```{r}
+heavy <- subset(means, plasticware == "microplate" | plasticware == "red cup"|
+                  plasticware == "water bottle")
+
+ggplot(data = heavy, aes(x = fct_relevel(plasticware,"microplate","water bottle"
+                                         ,"red cup"), y = mean,fill="maroon")) +
+  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.75) +
+  geom_errorbar( aes(x=plasticware, ymin=mean-sd, ymax=mean+sd), width=0.4, 
+                 colour="orange", alpha=0.9, size=1.3,
+                 position = position_dodge(.9)) +  labs(y = "weight (g)",
+                                                        x = "Type of plastic")+
+  scale_fill_manual(values=c("maroon","gray","gray","gray"))+ 
+  theme_minimal()+  
+  theme(axis.text.x = element_text(angle = 20, vjust = 0.5, hjust=.2),
+        legend.position = "none")+geom_text(aes(label=round(mean,2)),
+                                            nudge_x = .2,nudge_y = 2) 
+```
+
+#Figure 1D
+```{r}
+costsavings<- read.csv("rawdata/costsavingsplot.csv")
+
+ggplot(costsavings, aes(x = year,y=dollars,fill=use)) + 
+  geom_line(aes(color = use)) + 
+  scale_color_manual(values = c("maroon", "gray"))+  labs(y = "Funds Spent",
+                                                          x = "year")+ 
+  theme_minimal()+labs(color='Number of tip uses') 
+#ggsave("~/Google Drive/Shared drives/PlantSynBioLab/Johns Folder/TidyTron/fig1Ccash.png", width = 6, height = 4, dpi = 400)
+```
+
+#Figure 1E
+```{r}
+tipsavings<- read.csv("rawdata/tipsavingsplot.csv")
+ggplot(tipsavings, aes(x = year,y=tips,fill=use)) + 
+  geom_line(aes(color = use)) + 
+  scale_color_manual(values = c("orange", "gray"))+  labs(y = "Number of tips used", x = "year")+ theme_minimal()+labs(color='Number of tip uses') 
+#ggsave("~/Google Drive/Shared drives/PlantSynBioLab/Johns Folder/TidyTron/fig1C_tipnum.png", width = 6, height = 4, dpi = 400)
+```
+
+#Figure 2B
+```{r}
+data <- read.csv("rawdata/20230412_counts.csv")
+data$color <- str_replace_all(data$color,'-','_')
+```
+
+Run ANOVA and Tukey's
+```{r}
+model=lm( data$count ~ data$color )
+ANOVA=aov(model)
+summary(ANOVA)
+TUKEY <- TukeyHSD(x=ANOVA, 'data$color', conf.level=0.95)
+cld <- multcompLetters4(ANOVA, TUKEY)
+plot(TUKEY , las=1 , col="brown")
+```
+
+```{r}
+# I need to group the treatments that are not different each other together.
+generate_label_df <- function(TUKEY, variable){
+ 
+     # Extract labels and factor levels from Tukey post-hoc 
+     Tukey.levels <- TUKEY[[variable]][,4]
+     Tukey.labels <- data.frame(multcompLetters(Tukey.levels)['Letters'])
+     
+     #I need to put the labels in the same order as in the boxplot :
+     Tukey.labels$treatment=rownames(Tukey.labels)
+     Tukey.labels=Tukey.labels[order(Tukey.labels$treatment) , ]
+     return(Tukey.labels)
+     }
+ 
+# Apply the function on my dataset
+LABELS <- generate_label_df(TUKEY , "data$color")
+
+colnames(LABELS)<- c("Letters","color")
+dataa <- merge(data, LABELS, by = "color",
+                  all.x = TRUE)
+```
+
+
+
+```{r}
+data$color <- factor(data$color, levels = c("blue_378_c",'blue_378','LB_1',
+                                            'orange_379_c','orange_379', 'LB_2','pink_381_c','pink_381','LB_3','purple_382_c','purple_382','LB_4'))
+
+Count_summary <- aggregate(.~color,data=data,FUN = mean )
+colnames(Count_summary) <- c("color", "mean_count","control")
+test1 <- aggregate(.~color,data=data,FUN="sd")
+colnames(test1) <- c("color", "sd","control")
+Count_summary["sd"] <- test1["sd"]
+
+data1 <- subset(dataa, select = -c(count,control))
+data1 <- distinct(data1, color, .keep_all = TRUE)
+Count_summary <- merge(Count_summary, data1, by = "color",
+                  all.x = TRUE)
+
+# create a vector with letters in the desired order
+x <- c("blue_378_c",'blue_378','LB_1','orange_379_c','orange_379', 'LB_2','pink_381_c','pink_381','LB_3','purple_382_c','purple_382','LB_4')
+
+Count_summary<- Count_summary %>%
+  slice(match(x, color))
+
+Count_summary$control <- as.logical(Count_summary$control)
+Count_summary$control <- factor(Count_summary$control, labels = c('Cleaned',
+                                                                  'Fresh'))
+Count_summary$color <- str_replace_all(Count_summary$color,'_c','')
+Count_summary$color <- str_replace_all(Count_summary$color,'-','_')
+
+
+labelconv<- c("blue_378" = "aeBlue","LB_1"= " LB\nplate 1",
+              "orange_379"="Yukon","LB_2" = " LB\nplate 2",
+              "pink_381" = "eforCP","LB_3"= " LB\nplate 3",
+              "purple_382"="tsPurple","LB_4" = " LB\nplate 4")
+
+ggplot(data = Count_summary, aes(x = color, y = mean_count,
+                                 fill=fct_relevel(control,"Fresh"))) +
+  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.75) +
+  geom_errorbar( aes(x=color, ymin=mean_count-sd, ymax=mean_count+sd), 
+                 width=0.4, colour="orange", alpha=0.9, size=1.3,
+                 position = position_dodge(.9)) + 
+  scale_x_discrete(labels=labelconv, 
+                   limits=unique(as.character(Count_summary$color)) ) +
+  geom_text(data = Count_summary, aes(x = color, y = 400, label = Letters,),
+            size = 3.4, vjust = 0, hjust = -0.5, 
+            position =position_dodge(width = 1) ) +  
+  labs(y = "Average Colony Count", x = expression(paste(italic("E. coli"), 
+                                                        "Color")))+
+  scale_fill_manual(values=c("gray","maroon","gray","gray","maroon","gray",
+                             "gray","maroon","gray","gray","maroon","gray"))+ 
+  theme_minimal() +labs(fill = "Tip treatment")+  
+  theme(axis.text.x = element_text(angle = 40, vjust = 0.5, hjust=.2)) 
+```
+
+#Figure 2C
+```{r}
+data <- read.csv("rawdata/20230418_vmax.csv")
+data_long <- tidyr::pivot_longer(
+  data = data, cols = c('one','two','three','four','five','six','seven',
+                        'eight','nine','ten','eleven','twelve'), 
+  names_to = "Column")
+```
+
+Adding tip number and time to each row
+```{r}
+simpletime <- c('maxv','r','tv','lag')
+time1 <- unlist(lapply(simpletime, rep, 12))
+clas<-rep(time1,8)
+
+data_long['classification'] <- clas
+data_long <-subset(data_long, data_long$value != "")
+
+A <- rep('1-2-1',3)
+B<- rep('1-1-1',3)
+C<- rep('1-1',3)
+D<- rep('1',3)
+E<- rep('none',3)
+
+trt1 <- c(A,B,C,D)
+trt1<- rep(trt1,4)
+
+trt2 <- c(E,A,B,C)
+trt2<- rep(trt2,4)
+
+trt3 <- c(D,E,A,B)
+trt3<- rep(trt3,4)
+
+trt4 <- c(C,D,E,A)
+trt4<- rep(trt4,4)
+
+trt5 <- c(B,C,D,E)
+trt5<- rep(trt5,4)
+
+trt6 <- c(A,B,C,D)
+trt6<- rep(trt6,4)
+
+trt7 <- c(E,A,B,C)
+trt7<- rep(trt7,4)
+
+trt8 <- c(D,E)
+trt8<- rep(trt8,4)
+
+alltrts<-c(trt1,trt2,trt3,trt4,trt5,trt6,trt7,trt8)
+
+one <- rep('1',48)
+
+A <- rep('none',3)
+B <-rep('7.5',9)
+C<-c(A,B)
+two<-rep(C,4)
+
+A <- rep('7.5',3)
+B <-rep('none',3)
+C <-rep('1',6)
+D<-c(A,B,C)
+three<-rep(D,4)
+
+A <- rep('1',6)
+B <-rep('none',3)
+C <-rep('7.5',3)
+D<-c(A,B,C)
+four<-rep(D,4)
+
+A <- rep('7.5',9)
+B <-rep('none',3)
+D<-c(A,B)
+five<-rep(D,4)
+
+six<-rep('1',48)
+
+A <- rep('none',3)
+B <-rep('7.5',9)
+D<-c(A,B)
+seven<-rep(D,4)
+
+A <- rep('7.5',3)
+B <-rep('none',3)
+D<-c(A,B)
+eight<-rep(D,4)
+
+allblch <- c(one,two,three,four,five,six,seven,eight)
+
+data_long['treatment']<- alltrts
+data_long['bleach']<-allblch
+data_long$combo<-paste(data_long$treatment,data_long$bleach,sep="_")
+```
+
+Here you read in the OD600 values, along with the "Time" Column
+```{r}
+data <- read.csv("rawdata/20230418_od.csv")
+
+data_long1 <- tidyr::pivot_longer(
+  data = data, cols = c('A1','A2','A3','A4','A5','A6','A7','A8','A9','A10',
+                        'A11','A12','B1','B2','B3','B4','B5','B6','B7','B8',
+                        'B9','B10','B11','B12','C1','C2','C3','C4','C5','C6',
+                        'C7','C8','C9','C10','C11','C12','D1','D2','D3','D4',
+                        'D5','D6','D7','D8','D9','D10','D11','D12','E1','E2',
+                        'E3','E4','E5','E6','E7','E8','E9','E10','E11','E12',
+                        'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10',
+                        'F11','F12','G1','G2','G3','G4','G5','G6','G7','G8',
+                        'G9','G10','G11','G12','H1','H2','H3','H4','H5','H6'), 
+  names_to = "Column")
+
+wells<-c('A1','A2','A3','A4','A5','A6','A7','A8','A9','A10','A11','A12','B1',
+         'B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','C1','C2',
+         'C3','C4','C5','C6','C7','C8','C9','C10','C11','C12','D1','D2','D3',
+         'D4','D5','D6','D7','D8','D9','D10','D11','D12','E1','E2','E3','E4',
+         'E5','E6','E7','E8','E9','E10','E11','E12','F1','F2','F3','F4','F5',
+         'F6','F7','F8','F9','F10','F11','F12','G1','G2','G3','G4','G5','G6',
+         'G7','G8','G9','G10','G11','G12','H1','H2','H3','H4','H5','H6' )
+
+A <- rep('1-2-1',3)
+B<- rep('1-1-1',3)
+C<- rep('1-1',3)
+D<- rep('1',3)
+E<- rep('none',3)
+
+trt1 <- c(A,B,C,D)
+trt2 <- c(E,A,B,C)
+trt3 <- c(D,E,A,B)
+trt4 <- c(C,D,E,A)
+trt5 <- c(B,C,D,E)
+trt6 <- c(A,B,C,D)
+trt7 <- c(E,A,B,C)
+trt8 <- c(D,E)
+
+alltrts<-c(trt1,trt2,trt3,trt4,trt5,trt6,trt7,trt8)
+alltrts<-rep(alltrts,27)
+alltrts<-as.data.frame((alltrts))
+
+one<- rep('1',12)
+two<-rep('none',3)
+three<-rep('7.5',12)
+four<-rep('none',3)
+comb<-c(one,two,three,four)
+comball<-rep(comb,3)
+allblch<-rep(comball,27)
+allblch<- as.data.frame(allblch)
+
+alltrts$combo<-paste(alltrts[,1],allblch[,1],sep="_")
+vec<-alltrts$combo
+
+data_long1['trt']<-vec
+simpletime <- c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,
+                25,26,27)
+time1 <- unlist(lapply(simpletime, rep,90))
+data_long1['time'] <- time1
+```
+
+Here I'm selecting only growth data before Vmax to accurately fit an 
+exponential growth model
+```{r}
+allgrowthconstants <- c()
+allxo <- c()
+
+data_long$Column <- gsub("one", 1, data_long$Column)
+data_long$Column <- gsub("two", 2, data_long$Column)
+data_long$Column <- gsub("three", 3, data_long$Column)
+data_long$Column <- gsub("four", 4, data_long$Column)
+data_long$Column <- gsub("five", 5, data_long$Column)
+data_long$Column <- gsub("six", 6, data_long$Column)
+data_long$Column <- gsub("seven", 7, data_long$Column)
+data_long$Column <- gsub("eight", 8, data_long$Column)
+data_long$Column <- gsub("nine", 9, data_long$Column)
+data_long$Column <- gsub("ten", 10, data_long$Column)
+data_long$Column <- gsub("eleven", 11, data_long$Column)
+data_long$Column <- gsub("twelve", 12, data_long$Column)
+data_long$well <-paste(data_long$X,data_long$Column,sep="")
+data_long$wellncol <-paste(data_long$well,data_long$combo,sep="+")
+data_long1$trtncol <-paste(data_long1$Column,data_long1$trt,sep="+")
+
+vec <- data_long1$trtncol
+vec <- unique(vec)
+
+for (x in vec) {
+tipdat<- subset(data_long1, trtncol == x )
+growdat<-subset(data_long, wellncol== x  )
+growdat<-subset(growdat, classification=="tv")
+time <- gsub(':','',growdat$value)
+tipdat$Time<-gsub(':','',tipdat$Time)
+growdat$value<-gsub(':','',growdat$value)
+tipdat$use = ""
+
+for (row in 1:nrow(tipdat)) { 
+
+  if (as.numeric(tipdat[row,"Time"]) - (as.numeric(growdat[1,"value"])) < 0){
+  tipdat[row,"use"] <- "yes"}
+  else {
+    tipdat[row,"use"] <-"nope"
+  }
+}
+tipdat <- subset(tipdat, tipdat$use == 'yes')
+
+relation <- lm(log(tipdat$value)~tipdat$time)
+intermediate <- coef(relation)
+growthconstant <- intermediate[2]
+xo <- exp(intermediate[1])
+allgrowthconstants <-append(allgrowthconstants, growthconstant)
+allxo <-append(allxo,xo)
+}
+
+growthefficiency1 <- data.frame(vec,allgrowthconstants,allxo)
+```
+
+```{r}
+ge2<-growthefficiency1
+ge2[c('well', 'treatment')] <- str_split_fixed(ge2$vec, '\\+', 2)
+ge2[c('trtmnt', 'bleach')] <- str_split_fixed(ge2$treatment, '_', 2)
+
+ge2$treatment <- sub('-','_',ge2$treatment)
+ge2$treatment <- sub('-','_',ge2$treatment)
+
+model=lm(allxo ~ treatment, data = ge2)
+ANOVA=aov(model)
+summary(ANOVA)
+TUKEY <- TukeyHSD(x=ANOVA, 'treatment', conf.level=0.95)
+plot(TUKEY , las=1 , col="brown")
+
+# I need to group the treatments that are not different each other together.
+generate_label_df <- function(TUKEY, variable){
+ 
+     # Extract labels and factor levels from Tukey post-hoc 
+     Tukey.levels <- TUKEY[[variable]][,4]
+     Tukey.labels <- data.frame(multcompLetters(Tukey.levels)['Letters'])
+     
+     #I need to put the labels in the same order as in the boxplot :
+     Tukey.labels$treatment=rownames(Tukey.labels)
+     Tukey.labels=Tukey.labels[order(Tukey.labels$treatment) , ]
+     return(Tukey.labels)
+     }
+ 
+# Apply the function on my dataset
+#LABELS <- generate_label_df(TUKEY , "steady_states$strain_and_trt")
+LABELS <- generate_label_df(TUKEY , "treatment")
+names(LABELS)[2] ="combo"
+
+ge2["combo"] <-""
+ge2$combo<-ge2$treatment
+ge2 <- merge(ge2, LABELS, by = "combo",
+                  all.x = TRUE)
+
+ggplot(ge2, aes(x =trtmnt, y = allxo, fill=bleach)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_point(alpha = 0.7, position = position_beeswarm(dodge.width = 0.75)) + 
+  scale_y_continuous(trans=scales::pseudo_log_trans(base = 10)) +
+  labs(y = "Xo") + 
+  scale_color_manual(values = c("darkgrey", "maroon","green")) + 
+  scale_fill_manual(values = c("darkgrey", "maroon","green")) + 
+  theme_classic() + 
+  theme( 
+        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))+
+  geom_text(data = ge2, aes(x = trtmnt , y = .155, label = Letters), 
+            size = 3.4, vjust = 0, hjust = -0.5,
+            position =position_dodge(width = 1) )+
+  labs(x="Rinse Rigor")+ labs(fill = "[Bleach]")
+#ggsave("fig2C.png", width = 8, height = 4, dpi = 400)
+```
+
+#Figure 2D
+```{r}
+data <- read.csv("rawdata/20230420_vmax.csv")
+data_long <- tidyr::pivot_longer(
+  data = data, cols = c('one','two','three','four','five','six','seven',
+                        'eight','nine','ten','eleven','twelve'), 
+  names_to = "Column")
+```
+
+Adding tip number and time to each row
+```{r}
+simpletime <- c('maxv','r','tv','lag')
+time1 <- unlist(lapply(simpletime, rep, 12))
+clas<-rep(time1,8)
+
+data_long['classification'] <- clas
+data_long <-subset(data_long, data_long$value != "")
+
+A <- rep('clean',6)
+B<- rep('fresh',6)
+C <- c(A,B)
+E<- rep(C,32)
+
+data_long['treatment']<- E
+data_long$combo<-paste(data_long$treatment,data_long$bleach,sep="_")
+```
+
+Here you read in the OD600 values, along with the "Time" Column
+```{r}
+data <- read.csv("rawdata/20230420_od.csv")
+data_long1 <- tidyr::pivot_longer(
+  data = data, cols = c('A1','A2','A3','A4','A5','A6','A7','A8','A9','A10',
+                        'A11','A12','B1','B2','B3','B4','B5','B6','B7','B8',
+                        'B9','B10','B11','B12','C1','C2','C3','C4','C5','C6',
+                        'C7','C8','C9','C10','C11','C12','D1','D2','D3','D4',
+                        'D5','D6','D7','D8','D9','D10','D11','D12','E1','E2',
+                        'E3','E4','E5','E6','E7','E8','E9','E10','E11','E12',
+                        'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10',
+                        'F11','F12','G1','G2','G3','G4','G5','G6','G7','G8',
+                        'G9','G10','G11','G12','H1','H2','H3','H4','H5','H6',
+                        'H7','H8','H9','H10','H11','H12'), names_to = "Column")
+
+wells<-c('A1','A2','A3','A4','A5','A6','A7','A8','A9','A10','A11','A12','B1',
+         'B2','B3','B4','B5','B6','B7','B8','B9','B10','B11','B12','C1','C2',
+         'C3','C4','C5','C6','C7','C8','C9','C10','C11','C12','D1','D2','D3',
+         'D4','D5','D6','D7','D8','D9','D10','D11','D12','E1','E2','E3','E4',
+         'E5','E6','E7','E8','E9','E10','E11','E12','F1','F2','F3','F4','F5',
+         'F6','F7','F8','F9','F10','F11','F12','G1','G2','G3','G4','G5','G6',
+         'G7','G8','G9','G10','G11','G12','H1','H2','H3','H4','H5','H6','H7',
+         'H8','H9','H10','H11','H12' )
+
+E<- rep(C,216)
+data_long1['treatment']<- E
+
+simpletime <- c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,
+                25,26,27)
+time1 <- unlist(lapply(simpletime, rep,96))
+data_long1['time'] <- time1
+```
+
+Here I'm selecting only growth data before Vmax to accurately fit an 
+exponential growth model
+```{r}
+allgrowthconstants <- c()
+allxo <- c()
+
+data_long$Column <- gsub("one", 1, data_long$Column)
+data_long$Column <- gsub("two", 2, data_long$Column)
+data_long$Column <- gsub("three", 3, data_long$Column)
+data_long$Column <- gsub("four", 4, data_long$Column)
+data_long$Column <- gsub("five", 5, data_long$Column)
+data_long$Column <- gsub("six", 6, data_long$Column)
+data_long$Column <- gsub("seven", 7, data_long$Column)
+data_long$Column <- gsub("eight", 8, data_long$Column)
+data_long$Column <- gsub("nine", 9, data_long$Column)
+data_long$Column <- gsub("ten", 10, data_long$Column)
+data_long$Column <- gsub("eleven", 11, data_long$Column)
+data_long$Column <- gsub("twelve", 12, data_long$Column)
+data_long$well <-paste(data_long$X,data_long$Column,sep="")
+data_long$wellncol <-paste(data_long$well,data_long$combo,sep="+")
+data_long1$trtncol <-paste(data_long1$Column,data_long1$trt,sep="+")
+
+vec <- data_long1$trtncol
+vec <- unique(vec)
+
+for (x in wells) {
+tipdat<- subset(data_long1, Column == x )
+growdat<-subset(data_long, well== x  )
+growdat<-subset(growdat, classification=="tv")
+time <- gsub(':','',growdat$value)
+tipdat$Time<-gsub(':','',tipdat$Time)
+growdat$value<-gsub(':','',growdat$value)
+tipdat$use = ""
+
+for (row in 1:nrow(tipdat)) { 
+
+  if (as.numeric(tipdat[row,"Time"]) - (as.numeric(growdat[1,"value"])) < 0){
+  tipdat[row,"use"] <- "yes"}
+  else {
+    tipdat[row,"use"] <-"nope"
+  }
+}
+tipdat <- subset(tipdat, tipdat$use == 'yes')
+
+relation <- lm(log(tipdat$value)~tipdat$time)
+intermediate <- coef(relation)
+growthconstant <- intermediate[2]
+xo <- exp(intermediate[1])
+allgrowthconstants <-append(allgrowthconstants, growthconstant)
+allxo <-append(allxo,xo)
+}
+
+growthefficiency1 <- data.frame(wells,allgrowthconstants,allxo)
+A <- rep('clean',6)
+B<- rep('fresh',6)
+C <- c(A,B)
+E<- rep(C,8)
+growthefficiency1$clean <- E
+```
+
+```{r}
+ggplot(growthefficiency1, aes(x =clean, y = allxo,fill=clean)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_point(alpha = 0.7, position = position_beeswarm(dodge.width = 0.75)) + 
+  scale_y_continuous(trans=scales::pseudo_log_trans(base = 10)) +
+  labs(y = "Xo") + 
+  scale_color_manual(values = c("darkgrey", "maroon")) + 
+  scale_fill_manual(values = c("darkgrey", "maroon")) + 
+  theme_classic() + 
+  theme(legend.position = c(.9,.15), 
+        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))+
+  stat_compare_means(method = "t.test",label.x = 1.4, label.y = .028)
+```
+CV calculations
+```{r}
+ge2<-growthefficiency1
+ge <- subset(ge2, select = -c(wells))
+
+means <- aggregate(.~clean,data=ge,FUN = "mean" )
+colnames(means) <- c("clean", "meanug","meanxo")
+sd <- aggregate(.~clean,data=ge,FUN ="sd")
+colnames(sd) <- c("clean", "sdug","sdxo")
+means["sdug"] <- sd["sdug"]
+means["sdxo"] <- sd["sdxo"]
+means["cv"] <- (means["sdxo"]/means["meanxo"])*100
+print(means)
+```
+
+#Figure 3A
+```{r}
+data<- read.csv("rawdata/20230417_tempremoved.csv")
+newdata <- subset(data, select = -c(Well,Cq))
+cl<-c("fresh","dirty","clean","clean","clean")
+cll<-rep(cl,6)
+newdata$Cleaning<-cll
+ggplot(newdata, aes( y = SQ, x=fct_relevel(Sample, "fresh"),
+                     color=Cleaning,fill=Cleaning)) + 
+  geom_boxplot(outlier.shape = NA, fill=c("gray","gray","gray","gray","maroon"),
+               alpha=0.3) + 
+  geom_point(alpha = 0.7, position = position_beeswarm(dodge.width = 0.75)) + 
+  scale_y_continuous(trans=scales::pseudo_log_trans(base = 10)) +
+  labs(y = "DNA Contamination (ng)") +
+  scale_color_manual(values = c("darkgray", "maroon","orange")) + 
+  scale_fill_manual(values = c("darkgray", "maroon","orange")) + 
+  theme_classic() + 
+  theme(legend.position = c(.3, .7), 
+        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1), 
+        axis.title.x = element_blank()) 
+
+```
+
+#Figure 4A
+```{r}
+data<- read.csv("rawdata/20230414_qpcr_analyzed.csv")
+newdata <- subset(data, Sample != "dirty_notemp" )
+newdata <- subset(newdata, Sample != "notemp_control")
+newdata <- subset(newdata,  Sample != "dirty_normalefficiencytest")
+newdata <- subset(newdata, Sample != "dirty_noprim" )
+newdata<- newdata %>%
+  mutate(across(SQ, na_if, "#VALUE!")) %>%  
+  mutate(across(Cq, na_if, "Undetermined"))
+
+model=lm( newdata$SQ ~ newdata$Sample )
+ANOVA=aov(model)
+summary(ANOVA)
+TUKEY <- TukeyHSD(x=ANOVA, 'newdata$Sample', conf.level=0.95)
+cld <- multcompLetters4(ANOVA, TUKEY)
+print(cld)
+ 
+# Tuckey test representation :
+plot(TUKEY , las=1 , col="brown")
+```
+
+```{r}
+# I need to group the treatments that are not different each other together.
+generate_label_df <- function(TUKEY, variable){
+ 
+     # Extract labels and factor levels from Tukey post-hoc 
+     Tukey.levels <- TUKEY[[variable]][,4]
+     Tukey.labels <- data.frame(multcompLetters(Tukey.levels)['Letters'])
+     
+     #I need to put the labels in the same order as in the boxplot :
+     Tukey.labels$treatment=rownames(Tukey.labels)
+     Tukey.labels=Tukey.labels[order(Tukey.labels$treatment) , ]
+     return(Tukey.labels)
+     }
+ 
+# Apply the function on my dataset
+LABELS <- generate_label_df(TUKEY , "newdata$Sample")
+colnames(LABELS)<- c("Letters","Sample")
+
+newdata <- subset(newdata, select = -c(Cq))
+newdata[is.na(newdata)] <- 0
+newdata$SQ = as.numeric(as.character(newdata$SQ))
+
+means <- aggregate(.~Sample,data=newdata,FUN = "mean" )
+colnames(means) <- c("Sample", "meanSQ")
+sd <- aggregate(.~Sample,data=newdata,FUN="sd")
+colnames(sd) <- c("Sample", "sd")
+means["sd"] <- sd["sd"]
+means <- merge(means, LABELS, by = "Sample",
+                  all.x = TRUE)
+x <- c("base_wash_initial","no_neutralizers_initial",
+       "no_neut_or_rinse_initial","base_wash_notemp","no_neutralizers_notemp",
+       "no_neut_or_rinse_notemp","base_wash_noprim","no_neutralizers_noprim",
+       "no_neut_or_rinse_noprim","base_wash_efficiency",
+       "no_neutralizers_efficiency","no_neut_or_rinse_efficiency")
+means<- means %>%
+  slice(match(x, Sample))
+means$Sample <- factor(means$Sample, levels = means$Sample)
+
+cl<-c("Fresh","Fresh","Fresh","Cleaned","Cleaned","Cleaned","Cleaned",
+      "Cleaned","Cleaned","Cleaned","Cleaned","Cleaned")
+means$Cleaned <- cl
+
+labelconv<- c("base_wash_initial" = "Wash+Neutralize\n+Rinse",
+              "no_neutralizers_initial"= "Wash+Rinse",
+              "no_neut_or_rinse_initial"="Wash","base_wash_notemp" = "Wash+Neutralize\n+Rinse","no_neutralizers_notemp"= "Wash+Rinse","no_neut_or_rinse_notemp"="Wash","base_wash_noprim"= "Wash+Neutralize\n+Rinse","no_neutralizers_noprim"= "Wash+Rinse","no_neut_or_rinse_noprim"="Wash","base_wash_efficiency"= "Wash+Neutralize\n+Rinse","no_neutralizers_efficiency"= "Wash+Rinse",
+              "no_neut_or_rinse_efficiency"="Wash")
+
+ggplot(data = means, aes(x = Sample, y = meanSQ,fill=Cleaned)) +
+  geom_bar(stat = "identity", position = position_dodge(), alpha = 0.75) +
+  geom_errorbar( aes(x=Sample, ymin=meanSQ-sd, ymax=meanSQ+sd),
+                 width=0.4, colour="orange", alpha=0.9, size=1.3,
+                 position = position_dodge(.9))   +
+  geom_text(data = means, aes(x = Sample, y = meanSQ+.1, label = Letters,), 
+            size = 5, vjust = 0, hjust = -0.5,
+            position =position_dodge(width = 1) ) +  
+  labs(y = "Amplification Efficiency", x = "Wash Rigor" )+ scale_fill_manual(values=c("maroon","gray","gray","gray"))+ 
+  theme_minimal() + 
+  scale_x_discrete(labels=labelconv)+  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.2))
+```
+
+#Figure 5C
+reading in and annotating data
+```{r}
+data1a <- read.csv("rawdata/20230215_plateclean.csv")
+data2a <- read.csv("rawdata/20230403_plateclean.csv")
+data3a <- read.csv("rawdata/20230406_plateclean.csv")
+data4a <- read.csv("rawdata/20230412_plateclean.csv")
+
+data1a <- data1a[!grepl("All Events", data1a$Gate),] #taking away an 
+#unnecessary datapoint
+
+data1a[43,"Sample"] <- "C2"
+data1a[44,"Sample"] <- "C2"
+data1a <- data1a[order(data1a$Sample),]
+data1a$rep<-'1'
+
+data2a <- distinct(data2a)
+data2a[97,"Sample"] <- "C2"
+data2a[98,"Sample"] <- "C2"
+data2a <- data2a[!grepl("All Events", data2a$Gate),]
+data2a <- data2a[!grepl(4, data2a$Sample),]
+data2a <- data2a[!grepl(5, data2a$Sample),]
+data2a <- data2a[!grepl(9, data2a$Sample),]
+data2a <- data2a[!grepl(10, data2a$Sample),]
+data2a <- data2a[order(data2a$Sample),]
+data2a$rep<-'2'
+
+
+data3a <- data3a[!grepl("All Events", data3a$Gate),]
+data3a<- data3a %>% 
+  mutate(Gate = str_replace(Gate, "R1", "Debris"))
+data3a<- data3a %>% 
+  mutate(Gate = str_replace(Gate, "R2", "Cells"))
+data3a[41,"Sample"] <- "C2"
+data3a[42,"Sample"] <- "C2"
+data3a <- data3a[!grepl("All Events", data3a$Gate),]
+data3a <- data3a[!grepl(4, data3a$Sample),]
+data3a <- data3a[!grepl(5, data3a$Sample),]
+data3a <- data3a[!grepl(9, data3a$Sample),]
+data3a <- data3a[!grepl(10, data3a$Sample),]
+data3a <- data3a[order(data3a$Sample),]
+data3a$rep<-'3'
+
+data4a <- data4a[!grepl("All Events", data4a$Gate),]
+data4a[37,"Sample"] <- "C2"
+data4a[38,"Sample"] <- "C2"
+data4a <- data4a[order(data4a$Sample),]
+data4a$rep<-'4'
+
+##############################################################################
+#putting data in order and annotating
+#data1 <- data1[seq(dim(data1)[1],1),]
+clean_method <- c("Rinsee", "Rinse+Bleach","Bleach+H2O2+25degrinse",
+                  "Bleach+H2O2+85degrinse","1%Bleach+H2O2+85degrinse")
+clean_method <- rep(clean_method, each=12)
+conts <- c("20X yeast","Bleached yeast","DI")
+conts <- rep(conts, each=6)
+clean_method <- append(clean_method,conts)
+
+contents_b4_cleaned <- c("yeast","DI","yeast","DI","yeast","DI","yeast","DI",
+                         "yeast","DI","20X yeast","Bleached yeast","none")
+contents_b4_cleaned <- rep(contents_b4_cleaned, each=6)
+
+data1a <- cbind(data1a, clean_method, contents_b4_cleaned)
+
+
+############################################################################
+#data2 <- data2[seq(dim(data2)[1],1),]
+clean_method <- c("Rinsee", "Rinse+Bleach","Bleach+H2O2+25degrinse",
+                  "Bleach+H2O2+85degrinse","1%Bleach+H2O2+85degrinse",
+                  "1%Bleach+H2O2+25degrinse","1%Bleach+H2O2+25degrinse")
+clean_method <- rep(clean_method, each=12)
+conts <- c("20X yeast","Bleached yeast")
+conts <- rep(conts, each=6)
+clean_method <- append(clean_method,conts)
+
+contents_b4_cleaned <- c("yeast","DI","yeast","DI","yeast","DI","yeast","DI",
+                         "yeast","DI","yeast","DI","yeast","DI","20X yeast",
+                         "Bleached yeast")
+contents_b4_cleaned <- rep(contents_b4_cleaned, each=6)
+
+data2a <- cbind(data2a, clean_method, contents_b4_cleaned)
+data2a <- data2a[!grepl("C2", data2a$Sample),] #there was no data collected
+#for this point
+
+#############################################################################
+#data3 <- data3[seq(dim(data3)[1],1),]
+clean_method <- c("Bleach+H2O2+25degrinse","1%Bleach+H2O2+25degrinse",
+                  "Bleach+.2Mbakingsoda+H2O2+25degrinse",
+                  "Bleach+.2Mbakingsoda+H2O2+25degrinse")
+clean_method <- rep(clean_method, each=12)
+conts <- c("20X yeast","Bleached yeast")
+conts <- rep(conts, each=6)
+clean_method <- append(clean_method,conts)
+
+contents_b4_cleaned <- c("yeast","DI","yeast","DI","yeast","DI","yeast","DI",
+                         "20X yeast","Bleached yeast")
+contents_b4_cleaned <- rep(contents_b4_cleaned, each=6)
+
+data3a <- cbind(data3a, clean_method, contents_b4_cleaned)
+
+#######################################################################
+#putting data in order and annotating
+#data1 <- data1[seq(dim(data1)[1],1),]
+clean_method <- c("Rinsee", "Rinse+Bleach","Bleach+H2O2+25degrinse",
+                  "Bleach+H2O2+85degrinse","1%Bleach+H2O2+85degrinse",
+                  "1%Bleach+H2O2+25degrinse")
+clean_method <- rep(clean_method, each=12)
+
+contents_b4_cleaned <- c("yeast","DI","yeast","DI","yeast","DI","yeast","DI",
+                         "yeast","DI","yeast","DI")
+contents_b4_cleaned <- rep(contents_b4_cleaned, each=6)
+
+data4a <- cbind(data4a, clean_method, contents_b4_cleaned)
+```
+
+subsetting and grouping
+```{r}
+newdata1 <- subset(data1a,contents_b4_cleaned == "yeast" | 
+                     contents_b4_cleaned == "none")
+newdata2 <- subset(data2a, contents_b4_cleaned == "yeast" )
+#newdata2["time_set"]<- ">7hrs"
+newdata3 <- subset(data3a, contents_b4_cleaned == "yeast")
+#newdata3["time_set"]<- "<7hrs"
+newdata4 <- subset(data4a, contents_b4_cleaned == "yeast")
+#newdata4["time_set"]<- ">7hrs"
+
+neww<- rbind(newdata1,newdata2,newdata3,newdata4)
+```
+
+Taking the top 3 highest event counts
+```{r}
+a <- subset(neww, Gate == "Cells" )
+b <- subset(neww, Gate == "Debris" )
+
+data_new2 <- a %>%                            # Top N highest values by group
+  arrange(desc(Count)) %>% 
+  group_by(clean_method) %>%
+  slice(1:3)
+data_new2 
+
+datt<- b %>%                                  # Top N highest values by group
+  arrange(desc(Count)) %>% 
+  group_by(clean_method) %>%
+  slice(1:3)
+
+yo<- rbind(data_new2,datt)
+```
+
+ANOVA and Tukey's
+```{r}
+model=lm(Count ~ clean_method*Gate, data = yo )
+ANOVA=aov(model)
+summary(ANOVA)
+TUKEY <- TukeyHSD(x=ANOVA, 'clean_method:Gate', conf.level=0.95)
+ 
+# Tuckey test representation :
+plot(TUKEY , las=1 , col="brown")
+
+generate_label_df <- function(TUKEY, variable){
+ 
+     # Extract labels and factor levels from Tukey post-hoc 
+     Tukey.levels <- TUKEY[[variable]][,4]
+     Tukey.labels <- data.frame(multcompLetters(Tukey.levels)['Letters'])
+     
+     #I need to put the labels in the same order as in the boxplot :
+     Tukey.labels$treatment=rownames(Tukey.labels)
+     Tukey.labels=Tukey.labels[order(Tukey.labels$treatment) , ]
+     return(Tukey.labels)
+     }
+ 
+# Apply the function on my dataset
+#LABELS <- generate_label_df(TUKEY , "steady_states$strain_and_trt")
+LABELS <- generate_label_df(TUKEY , "clean_method:Gate")
+
+names(LABELS)[2] ="combo"
+
+yo["combo"] <-""
+yo$combo<-paste(yo$clean_method,yo$Gate,sep=":")
+yo<- merge(yo, LABELS, by = "combo",
+                  all.x = TRUE)
+
+ggplot(yo, aes(x =fct_relevel(clean_method,"20X yeast","Bleached yeast", "Rinsee","Rinse+Bleach","Bleach+H2O2+25degrinse","Bleach+H2O2+85degrinse"), 
+               y = Count, color = Gate)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_point(alpha = 0.7, position = position_beeswarm(dodge.width = 0.75)) + 
+  scale_y_continuous(trans=scales::pseudo_log_trans(base = 10)) +
+  labs(y = "Cell Count") + 
+  scale_color_manual(values = c("darkgrey", "maroon")) + 
+  scale_fill_manual(values = c("darkgrey", "maroon")) + 
+  theme_classic() + 
+  theme(legend.position = c(.8, .7), 
+        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1), 
+        axis.title.x = element_blank())+
+  geom_text(data = yo, aes(x = clean_method , y = 900, label = Letters), 
+            size = 3.4, vjust = 0, hjust = -0.5,
+            position =position_dodge(width = 1) )+ 
+  scale_x_discrete(labels=labelconv)
+```
+
+##Figure 5D
+
+HERE I'LL look at difference between set out times
+```{r}
+newdata2 <- subset(data2a, contents_b4_cleaned == "yeast" & 
+                     clean_method == "1%Bleach+H2O2+25degrinse")
+newdata2["time_set"]<- ">7hrs"
+newdata3 <- subset(data3a, contents_b4_cleaned == "yeast" & 
+                     clean_method == "1%Bleach+H2O2+25degrinse")
+newdata3["time_set"]<- "<7hrs"
+newdata4 <- subset(data4a, contents_b4_cleaned == "yeast" & 
+                     clean_method == "1%Bleach+H2O2+25degrinse")
+newdata4["time_set"]<- ">7hrs"
+neww<- rbind(newdata2,newdata3,newdata4)
+```
+
+ANOVA and Tukey's
+```{r}
+model=lm(Count ~ time_set*Gate, data = neww )
+ANOVA=aov(model)
+summary(ANOVA)
+TUKEY <- TukeyHSD(x=ANOVA, 'time_set:Gate', conf.level=0.95)
+ 
+# Tuckey test representation :
+plot(TUKEY , las=1 , col="brown")
+
+
+# I need to group the treatments that are not different each other together.
+generate_label_df <- function(TUKEY, variable){
+ 
+     # Extract labels and factor levels from Tukey post-hoc 
+     Tukey.levels <- TUKEY[[variable]][,4]
+     Tukey.labels <- data.frame(multcompLetters(Tukey.levels)['Letters'])
+     
+     #I need to put the labels in the same order as in the boxplot :
+     Tukey.labels$treatment=rownames(Tukey.labels)
+     Tukey.labels=Tukey.labels[order(Tukey.labels$treatment) , ]
+     return(Tukey.labels)
+     }
+
+LABELS <- generate_label_df(TUKEY , "time_set:Gate")
+
+names(LABELS)[2] ="combo"
+neww["combo"] <-""
+neww$combo<-paste(neww$time_set,neww$Gate,sep=":")
+neww <- merge(neww, LABELS, by = "combo",
+                  all.x = TRUE)
+
+
+#Variation with 1% based on how long it sits.
+
+ggplot(neww, aes(x =time_set, y = Count, color = Gate)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_point(alpha = 0.7, position = position_beeswarm(dodge.width = 0.75)) + 
+  scale_y_continuous(trans=scales::pseudo_log_trans(base = 10)) +
+  labs(y = "Cell Count") + 
+  scale_color_manual(values = c("darkgrey", "maroon")) + 
+  scale_fill_manual(values = c("darkgrey", "maroon")) + 
+  theme_classic() + 
+  theme(legend.position = c(.17, .6), 
+        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1), 
+        axis.title.x = element_blank())+
+  geom_text(data = neww, 
+            aes(x = time_set , y = 600, label = Letters), 
+            size = 3.4, vjust = 0, hjust = -0.5,
+            position =position_dodge(width = 1) )
+```
+
+#Figure 5E
+chi square for 0 events vs. some events.
+```{r}
+#combine event types
+ddd<- data11[,c(1,3)]
+com <- aggregate(.~Sample,data=ddd,FUN = "sum" ) 
+com$clean <- "cleaned"
+
+#combine event types
+ddd<- data22[,c(1,3)]
+com2 <- aggregate(.~Sample,data=ddd,FUN = "sum")
+com2$clean <- "fresh"
+
+rdd <- rbind(com,com2)
+z<-rdd$Count > 0
+rdd$events <- z
+table(rdd$clean, rdd$events)
+```
+
+```{r}
+chisq.test(rdd$clean, rdd$events, correct=FALSE)
+```
+
+#Figure 5F
+reading in and annotating data
+```{r}
+#Cleaned Plate
+data11 <- read.csv("rawdata/20230517_fig4E.csv")
+
+#Fresh Plate
+data22 <- read.csv("rawdata/20230423_fullclean.csv")
+
+data11 <- data11[!grepl("All Events", data11$Gate),] #taking away an 
+#unnecessary datapoint
+data11 <- data11[order(data11$Sample),]
+data11$cleaned<-'cleaned'
+
+
+data22 <- data22[!grepl("All Events", data22$Gate),]
+data22 <- data22[order(data22$Sample),]
+data22$cleaned<-'fresh'
+
+newww<- rbind(data11,data22)
+```
+
+```{r}
+newb <- subset(newww,Count> 0)
+
+model=lm(Count ~ cleaned*Gate, data = newb, na.rm=T)
+ANOVA=aov(model,na.rm=T)
+summary(ANOVA)
+TUKEY <- TukeyHSD(x=ANOVA, 'cleaned:Gate', conf.level=0.95)
+ 
+# Tuckey test representation :
+plot(TUKEY , las=1 , col="brown")
+```
+
+```{r}
+# I need to group the treatments that are not different each other together.
+generate_label_df <- function(TUKEY, variable){
+ 
+     # Extract labels and factor levels from Tukey post-hoc 
+     Tukey.levels <- TUKEY[[variable]][,4]
+     Tukey.labels <- data.frame(multcompLetters(Tukey.levels)['Letters'])
+     
+     #I need to put the labels in the same order as in the boxplot :
+     Tukey.labels$treatment=rownames(Tukey.labels)
+     Tukey.labels=Tukey.labels[order(Tukey.labels$treatment) , ]
+     return(Tukey.labels)
+     }
+ 
+# Apply the function on my dataset
+LABELS <- generate_label_df(TUKEY , "cleaned:Gate")
+
+# Attach labels to dataframe
+names(LABELS)[2] ="combo"
+newb["combo"] <-""
+newb$combo<-paste(newb$cleaned,newb$Gate,sep=":")
+newb <- merge(newb, LABELS, by = "combo",
+                  all.x = TRUE)
+
+#plot Data with Tukey's labels
+ggplot(newb, aes(x =cleaned, y = Count, color = Gate)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_point(alpha = 0.7, position = position_beeswarm(dodge.width = 0.75)) + 
+  scale_y_continuous(trans=scales::pseudo_log_trans(base = 10)) +
+  labs(y = "Cell Count") + 
+  scale_color_manual(values = c("darkgray", "maroon")) + 
+  scale_fill_manual(values = c("darkgray", "maroon")) + 
+  theme_classic() + 
+  theme( 
+        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1), 
+        axis.title.x = element_blank()) +
+  geom_text(data = newb, 
+            aes(x =cleaned , y = 50, label = Letters), 
+            size = 3.4, vjust = 0, 
+            hjust = -0.5,position =position_dodge(width = 1) )
+```
+
