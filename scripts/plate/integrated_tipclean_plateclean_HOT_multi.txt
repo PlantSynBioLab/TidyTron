@@ -2,24 +2,76 @@ Setup_integrated_tipclean_plateclean_HOT_multi.py
 
 Attach p300_gen2_multi on right
 
-Load empty rack for dirty tips into deckslot 5
+Load empty rack for dirty tips into deckslot 8
 
-Load clean tips into deckslot 1
+Load clean tips into deckslot 4
 
-Load nest 12 well reservoir into deckslot 3
+Load nest 12 well reservoir into deckslot 3, 6, 1, 2
+
+Load reservoir into deckslot 7 and fill with DI
+
+Load temperature module and another water trough in deck slot 9
 
 Load reservoir for waste into deckslot 11
 
 Load microwell plate into deckslot 2 
 
-Load temperature module and a pipette lid filled with DI into deckslot 6
-[agilent reservoir doesn't contact block]
-
-Load cleaning solutions into 50mL wells:
+Load the following cleaning solutions into reservoir on deck slot 3:
 	
-	12mL bleach in A1
-	12mL 3% hydrogen peroxide in A2
-	12mL bleach in A3
-	12mL 3% hydrogen peroxide in A4
-	12mL DI water in A5
+	Slot 1: 12 mL Bleach
+	Slot 2: 12 mL H2O2
+	Slot 3: 12 mL Bleach
+	Slot 4: 12 mL H2O2
+	Slot 5: 12 mL Water
+	Slot 6: 12 mL Bleach
+	Slot 7: 12 mL H2O2
+	Slot 8: 12 mL H2O2
+	Slot 9: 12 mL Bleach
+	Slot 10: 12 mL Bleach
+	Slot 11: 12 mL Bleach
+	Slot 12: EMPTY
 
+Load the following cleaning solutions into reservoir on deck slot 6:
+	
+	Slot 1: 12 mL Bleach
+	Slot 2: 12 mL H2O2
+	Slot 3: 12 mL Water
+	Slot 4: 12 mL H2O2
+	Slot 5: 12 mL H2O2
+	Slot 6: 12 mL Water
+	Slot 7: 12 mL Water
+	Slot 8: 12 mL Water
+	Slot 9: 12 mL Water
+	Slot 10: 12 mL Water
+	Slot 11: 12 mL Water
+	Slot 12: 12 mL Water
+
+Load the following cleaning solutions into reservoir on deck slot 1:
+	
+	Slot 1: 12 mL Bleach
+	Slot 2: 12 mL Bleach
+	Slot 3: 12 mL Bleach
+	Slot 4: 12 mL H2O2
+	Slot 5: 12 mL H2O2
+	Slot 6: 12 mL H2O2
+	Slot 7: 12 mL Bleach
+	Slot 8: 12 mL H2O2
+	Slot 9: 12 mL Water
+	Slot 10: 12 mL H2O2
+	Slot 11: 12 mL H2O2
+	Slot 12: 12 mL Water
+
+Load the following cleaning solutions into reservoir on deck slot 2:
+	
+	Slot 1: 12 mL Water
+	Slot 2: 12 mL Water
+	Slot 3: 12 mL Water
+	Slot 4: EMPTY
+	Slot 5: EMPTY
+	Slot 6: EMPTY
+	Slot 7: EMPTY
+	Slot 8: EMPTY
+	Slot 9: EMPTY
+	Slot 10: EMPTY
+	Slot 11: EMPTY
+	Slot 12: EMPTY
